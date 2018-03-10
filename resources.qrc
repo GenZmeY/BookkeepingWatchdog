@@ -1,0 +1,30 @@
+<RCC>
+    <qresource prefix="/Tray">
+        <file>Res/TimeBad.png</file>
+        <file>Res/TimeGood.png</file>
+        <file>Res/TimeNormal.png</file>
+    </qresource>
+    <qresource prefix="/Button">
+        <file>Res/Enter.png</file>
+        <file>Res/Leave.png</file>
+        <file>Res/EnterActive.png</file>
+        <file>Res/LeaveActive.png</file>
+        <file>Res/Accept.png</file>
+        <file>Res/Back.png</file>
+        <file>Res/EnterDisabled.png</file>
+        <file>Res/LeaveDisabled.png</file>
+    </qresource>
+    <qresource prefix="/Icon">
+        <file>Res/Icon.png</file>
+    </qresource>
+    <qresource prefix="/Warnings">
+        <file>Res/15minutes.gif</file>
+        <file>Res/GoHome.png</file>
+        <file>Res/PayDay.gif</file>
+        <file>Res/PayDay2.gif</file>
+        <file>Res/Prepayment.gif</file>
+        <file>Res/Applo.gif</file>
+        <file>Res/Eat.gif</file>
+        <file>Res/Umaru.gif</file>
+    </qresource>
+</RCC>
