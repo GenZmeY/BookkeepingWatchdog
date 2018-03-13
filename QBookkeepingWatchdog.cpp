@@ -144,7 +144,9 @@ void QBookkeepingWatchdog::enter()
 
 	if (!leaveTimer.isActive())
 	{
-		int lastLeave = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000;
+		int lastLeave = 0;
+		if (!db.dayInfo(cd).timeEvent.isEmpty())
+			lastLeave = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000;
 
 		db.addTimeEvent(cd, QTime::currentTime().addSecs(db.timeout()*(-1)),Event::Enter);
 		updateMainWindow(cd);
@@ -168,7 +170,10 @@ void QBookkeepingWatchdog::enter()
 					showWarnWork();
 			}
 
-			int diff = scd.timeEvent.lastKey().msecsSinceStartOfDay()/1000 - lastLeave;
+
+			int diff = 0;
+			if (!db.dayInfo(cd).timeEvent.isEmpty())
+				diff = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000 - lastLeave;
 
 			if (diff >= 30*60 && diff <= 75*60 && lastLeave >= 11*60*60 && lastLeave <= 15*60*60)
 				showWarnEat();
