@@ -3,6 +3,7 @@
         <file>Res/TimeBad.png</file>
         <file>Res/TimeGood.png</file>
         <file>Res/TimeNormal.png</file>
+        <file>Res/TimeAFK.png</file>
     </qresource>
     <qresource prefix="/Button">
         <file>Res/Enter.png</file>

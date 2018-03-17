@@ -40,7 +40,8 @@ FORMS += \
         QBookkeepingWatchdog.ui
 
 DISTFILES += \
-    README.MD
+    README.MD \
+    TODO
 
 RESOURCES += \
     resources.qrc

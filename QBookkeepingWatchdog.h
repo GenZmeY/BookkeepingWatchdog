@@ -30,6 +30,7 @@ private:
 	QDesktopWidget desktop;
 	QLocalDataBase db;
 	bool trayEventBlock;
+	bool hideBlock;
 	QTimer leaveTimer;
 	QTimer blockTimer;
 	QTimer statUpdateTimer;

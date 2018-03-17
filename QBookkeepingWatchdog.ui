@@ -42,6 +42,9 @@
       <height>475</height>
      </rect>
     </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
     <property name="lineWidth">
      <number>0</number>
     </property>
@@ -156,7 +159,7 @@
           <item>
            <widget class="QLabel" name="lbCorrection">
             <property name="text">
-             <string>Коррекция:</string>
+             <string>Коррекция (ч:м):</string>
             </property>
            </widget>
           </item>
@@ -224,11 +227,17 @@
         <property name="horizontalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
         </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
         <property name="dragDropOverwriteMode">
          <bool>false</bool>
         </property>
         <property name="selectionMode">
          <enum>QAbstractItemView::NoSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
         </property>
         <property name="rowCount">
          <number>0</number>
@@ -237,7 +246,7 @@
          <number>2</number>
         </property>
         <attribute name="horizontalHeaderVisible">
-         <bool>false</bool>
+         <bool>true</bool>
         </attribute>
         <attribute name="horizontalHeaderDefaultSectionSize">
          <number>144</number>
@@ -249,10 +258,10 @@
          <bool>false</bool>
         </attribute>
         <attribute name="verticalHeaderDefaultSectionSize">
-         <number>25</number>
+         <number>20</number>
         </attribute>
         <attribute name="verticalHeaderMinimumSectionSize">
-         <number>25</number>
+         <number>20</number>
         </attribute>
         <attribute name="verticalHeaderStretchLastSection">
          <bool>false</bool>

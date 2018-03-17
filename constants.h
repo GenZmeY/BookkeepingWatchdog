@@ -20,6 +20,20 @@ const int prepayment              = 22;
 
 const QTime warnTimePayday        = QTime(16,0);
 
+const QString resIcon       = ":/Icon/Res/Icon.png";
+const QString resTimeBad    = ":/Tray/Res/TimeBad.png";
+const QString resTimeNormal = ":/Tray/Res/TimeNormal.png";
+const QString resTimeGood   = ":/Tray/Res/TimeGood.png";
+const QString resTimeAFK    = ":/Tray/Res/TimeAFK.png";
+const QString resNkt        = ":/Warnings/Res/15minutes.gif";
+const QString resPayDay1    = ":/Warnings/Res/PayDay.gif";
+const QString resPayDay2    = ":/Warnings/Res/PayDay2.gif";
+const QString resWork       = ":/Warnings/Res/Umaru.gif";
+const QString resDone       = ":/Warnings/Res/Applo.gif";
+const QString resHome       = ":/Warnings/Res/GoHome.png";
+const QString resPrepayment = ":/Warnings/Res/Prepayment.gif";
+const QString resEat        = ":/Warnings/Res/Eat.gif";
+
 enum class Event : int
 {
 	Enter      = 0,
@@ -35,9 +49,11 @@ enum class Page : int
 
 enum class State : int
 {
-	Bad        = 0,
-	Normal     = 1,
-	Good       = 2
+	Nan        = 0,
+	Bad        = 1,
+	Normal     = 2,
+	Good       = 3,
+	AFK        = 4
 };
 
 // PushButtons Style Sheet
@@ -81,18 +97,5 @@ QPushButton:disabled\
     background-image:url(:/Button/Res/LeaveDisabled.png);\
 }\
 ";
-
-const QString resIcon       = ":/Icon/Res/Icon.png";
-const QString resTimeBad    = ":/Tray/Res/TimeBad.png";
-const QString resTimeNormal = ":/Tray/Res/TimeNormal.png";
-const QString resTimeGood   = ":/Tray/Res/TimeGood.png";
-const QString resNkt        = ":/Warnings/Res/15minutes.gif";
-const QString resPayDay1    = ":/Warnings/Res/PayDay.gif";
-const QString resPayDay2    = ":/Warnings/Res/PayDay2.gif";
-const QString resWork       = ":/Warnings/Res/Umaru.gif";
-const QString resDone       = ":/Warnings/Res/Applo.gif";
-const QString resHome       = ":/Warnings/Res/GoHome.png";
-const QString resPrepayment = ":/Warnings/Res/Prepayment.gif";
-const QString resEat        = ":/Warnings/Res/Eat.gif";
 
 #endif // CONSTANTS_H

@@ -66,7 +66,7 @@ void QBookkeepingWatchdog::setConnections()
 }
 
 void QBookkeepingWatchdog::showWarnPayday    () { showWarning(QTime::currentTime().msecsSinceStartOfDay() % 2 == 0 ? resPayDay1 : resPayDay2); warnPayday = true; }
-void QBookkeepingWatchdog::showWarnNkt       () { showWarning(resNkt); QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnHome()));     warnNkt    = true; }
+void QBookkeepingWatchdog::showWarnNkt       () { showWarning(resNkt);        warnNkt        = true; }
 void QBookkeepingWatchdog::showWarnPrepayment() { showWarning(resPrepayment); warnPrepayment = true; }
 void QBookkeepingWatchdog::showWarnHome      () { showWarning(resHome);       warnHome       = true; }
 void QBookkeepingWatchdog::showWarnWork      () { showWarning(resWork,7500);  warnWork       = true; }
@@ -76,6 +76,7 @@ void QBookkeepingWatchdog::showWarnEat       () { showWarning(resEat,6600);   wa
 void QBookkeepingWatchdog::setDefaults()
 {
 	trayEventBlock = false;
+	hideBlock = false;
 	this->setWindowFlags(Qt::CustomizeWindowHint | Qt::Tool | Qt::FramelessWindowHint);// | Qt::FramelessWindowHint);
 	ui->pbEnter->setCursor(QCursor(Qt::PointingHandCursor));
 	ui->pbLeave->setCursor(QCursor(Qt::PointingHandCursor));
@@ -84,6 +85,13 @@ void QBookkeepingWatchdog::setDefaults()
 	ui->pbLeave->setStyleSheet(pbLeaveStyle);
 	ui->pbAccept->setEnabled(false);
 	timerProgress = 0;
+	warnPayday     = false;
+	warnPrepayment = false;
+	warnNkt        = false;
+	warnHome       = false;
+	warnWork       = false;
+	warnEat        = false;
+	warnDone       = false;
 }
 
 void QBookkeepingWatchdog::setTray()
@@ -115,6 +123,8 @@ void QBookkeepingWatchdog::trayIconActivated(QSystemTrayIcon::ActivationReason r
 	    case QSystemTrayIcon::DoubleClick:
 		    if (isHidden() && !trayEventBlock)
 				showWindow();
+				ui->calendar->setSelectedDate(QDate::currentDate());
+				updateMainWindow(QDate::currentDate());
 		    break;
 	    default:
 		    break;
@@ -130,9 +140,9 @@ void QBookkeepingWatchdog::changeEvent(QEvent *event)
 {
 	QMainWindow::changeEvent(event);
 	qApp->processEvents(); // Для того чтобы trayIconActivated отработал раньше. В этом случае не будет повторного разворачивания окна
-	if (event->type() == QEvent::WindowStateChange && isMinimized())
+	if (event->type() == QEvent::WindowStateChange && isMinimized() && !hideBlock)
 		hide(); // Скрытие при сворачивании (не нужно, но пусть будет)
-	if (event->type() == QEvent::ActivationChange && !isActiveWindow())
+	if (event->type() == QEvent::ActivationChange && !isActiveWindow() && !hideBlock)
 		hide();
 	trayEventBlock = true; // костыль в пару
 	QTimer::singleShot(trayBlockInterval,this,SLOT(unblockTrayEvent()));
@@ -141,6 +151,8 @@ void QBookkeepingWatchdog::changeEvent(QEvent *event)
 void QBookkeepingWatchdog::enter()
 {
 	QDate cd = QDate::currentDate();
+
+	trayState = State::Nan;
 
 	if (!leaveTimer.isActive())
 	{
@@ -166,8 +178,7 @@ void QBookkeepingWatchdog::enter()
 				warnEat        = false;
 				warnDone       = false;
 
-				if (trayState == State::Bad) //QTimer::singleShot(warningTimerInterval*2,this,SLOT(showWarnWork()));
-					showWarnWork();
+				if (trayState == State::Bad) QTimer::singleShot(3000,this,SLOT(showWarnWork()));
 			}
 
 
@@ -175,14 +186,14 @@ void QBookkeepingWatchdog::enter()
 			if (!db.dayInfo(cd).timeEvent.isEmpty())
 				diff = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000 - lastLeave;
 
-			if (diff >= 30*60 && diff <= 75*60 && lastLeave >= 11*60*60 && lastLeave <= 15*60*60)
-				showWarnEat();
+			if (!warnEat && diff >= 30*60 && diff <= 75*60 && lastLeave >= 11*60*60 && lastLeave <= 15*60*60)
+				QTimer::singleShot(3000,this,SLOT(showWarnEat()));
 
 			QTime ct = QTime::currentTime();
-			if (cd == paydayCorrected(payday))
+			if (!warnPayday && cd == paydayCorrected(payday))
 				QTimer::singleShot(ct.msecsTo(QTime(16,0)),this,SLOT(showWarnPayday()));
 
-			if (cd == paydayCorrected(prepayment))
+			if (!warnPrepayment && cd == paydayCorrected(prepayment))
 				QTimer::singleShot(ct.msecsTo(QTime(16,0)),this,SLOT(showWarnPrepayment()));
 		}
 	}
@@ -217,6 +228,8 @@ void QBookkeepingWatchdog::leave()
 		enableInterface();
 		enableEnter();
 		ui->tableDay->scrollToBottom();
+		setIcon(resTimeAFK);
+		trayState = State::AFK;
 	}
 }
 
@@ -232,6 +245,8 @@ void QBookkeepingWatchdog::leaveTick()
 		addServiceRow("Блокировка входа");
 		enableEnter(false);
 		blockTimer.start(leaveTimerInterval);
+		setIcon(resTimeAFK);
+		trayState = State::AFK;
 	}
 	else
 	{
@@ -363,8 +378,6 @@ void QBookkeepingWatchdog::showWindow()
 	int x = dx ? dx : dw - w;
 
 	setGeometry(x,y,w,h);
-	ui->calendar->setSelectedDate(QDate::currentDate());
-	updateMainWindow(QDate::currentDate());
 	showNormal();
 	setFocus();
 	activateWindow();
@@ -459,6 +472,12 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		{
 			workDayRequired = date.nonWorking ? 0 : workDayRequiredStandart;
 			workDayComplete = workToday;
+
+			if (_date == cd && (date.timeEvent.isEmpty() || (!date.timeEvent.isEmpty() && date.timeEvent.last() == Event::Leave)))
+			{
+				trayState = State::AFK;
+				setIcon(resTimeAFK);
+			}
 		}
 		if (dateIt >= weekBegin && dateIt <= weekEnd) // За неделю
 		{
@@ -511,7 +530,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		setStat(ui->lbMonthStat,diffMonth);
 	}
 
-	if (cd >= weekBegin && cd <= weekEnd)
+	if (cd >= weekBegin && cd <= weekEnd && trayState != State::AFK)
 	{
 		if (diffWeek + workDayRequiredStandart < 0)
 		{
@@ -523,15 +542,17 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		{
 			setIcon(resTimeNormal);
 			setStat(ui->lbWeekStat,diffWeek,"Black");
+			if (warningsEnabled && !warnDone && trayState == State::Bad)
+				QTimer::singleShot(1000,this,SLOT(showWarnDone()));
 			trayState = State::Normal;
 		}
 		else
 		{
 			setIcon(resTimeGood);
 			setStat(ui->lbWeekStat,diffWeek,"Green");
+			if (!warnHome && warningsEnabled && trayState == State::Normal) QTimer::singleShot(1000,this,SLOT(showWarnHome()));
+			if (!warnNkt  && warningsEnabled && trayState == State::Normal) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
 			trayState = State::Good;
-			if (warnDone == false && warningsEnabled) showWarnDone();
-			if (warnNkt == false && warningsEnabled) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
 		}
 	}
 	else
@@ -539,7 +560,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		setStat(ui->lbWeekStat,diffWeek);
 	}
 
-	if (cd == _date)
+	if (ui->calendar->selectedDate() == cd && _date == cd)
 	{
 		if (diffDay < 0)
 			setStat(ui->lbDayStat,diffDay,"Black");
@@ -570,10 +591,18 @@ void QBookkeepingWatchdog::setStat(QLabel *lb, int sec, QString color)
 
 void QBookkeepingWatchdog::showWarning(QString res, int msec)
 {
+	if (hideBlock) return;
+	// Пояснение к строке выше:
+	// Использование QTimer::singleShot, по факту, вызывает функцию два раза, вместо одного
+	// Это - гарантия того что функция не выполнится лишний раз.
+	// Почему это происходит - большая загадка для меня
+	// Кстати баг плавающий
+
+	hideBlock = true;
 	enableInterface(false);
 	QPixmap pic(res);
 	pic = pic.scaled(width(),height(),Qt::KeepAspectRatio);
-	setFixedHeight(pic.height());
+	setFixedHeight(pic.height()); // Проблема димана в этой строчке
 
 	if (res.endsWith("gif"))
 	{
@@ -587,8 +616,8 @@ void QBookkeepingWatchdog::showWarning(QString res, int msec)
 		ui->lbWarning->setPixmap(pic);
 	}
 	ui->stackedWidget->setCurrentIndex((int)Page::Warnings);
-	showWindow();
 	QTimer::singleShot(msec,this,SLOT(hideWarning()));
+	showWindow();
 }
 
 void QBookkeepingWatchdog::hideWarning()
@@ -599,6 +628,7 @@ void QBookkeepingWatchdog::hideWarning()
 	animation.stop();
 	hide();
 	enableInterface(true);
+	hideBlock = false;
 }
 
 QDate QBookkeepingWatchdog::paydayCorrected(int day)
