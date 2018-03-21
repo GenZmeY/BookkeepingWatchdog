@@ -216,6 +216,7 @@ void QBookkeepingWatchdog::leave()
 	enableInterface(false);
 	enableLeave(false);
 	enableEnter();
+	hideBlock = true;
 	if (db.timeout())
 	{
 		addServiceRow("Ожидание выхода");
@@ -229,9 +230,7 @@ void QBookkeepingWatchdog::leave()
 		enableInterface();
 		enableEnter();
 		ui->tableDay->scrollToBottom();
-		setIcon(resTimeAFK);
 		trayState = State::AFK;
-		hideBlock = true;
 	}
 }
 
@@ -247,9 +246,7 @@ void QBookkeepingWatchdog::leaveTick()
 		addServiceRow("Блокировка входа");
 		enableEnter(false);
 		blockTimer.start(leaveTimerInterval);
-		setIcon(resTimeAFK);
 		trayState = State::AFK;
-		hideBlock = true;
 	}
 	else
 	{
@@ -479,7 +476,6 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 			if (_date == cd && (date.timeEvent.isEmpty() || (!date.timeEvent.isEmpty() && date.timeEvent.last() == Event::Leave)))
 			{
 				trayState = State::AFK;
-				setIcon(resTimeAFK);
 				hideBlock = true;
 			}
 		}
@@ -534,7 +530,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		setStat(ui->lbMonthStat,diffMonth);
 	}
 
-	if (cd >= weekBegin && cd <= weekEnd && trayState != State::AFK)
+	if (cd >= weekBegin && cd <= weekEnd)
 	{
 		if (diffWeek + workDayRequiredStandart < 0)
 		{
