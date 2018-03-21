@@ -77,7 +77,7 @@ void QBookkeepingWatchdog::setDefaults()
 {
 	trayEventBlock = false;
 	hideBlock = false;
-	this->setWindowFlags(Qt::CustomizeWindowHint | Qt::Tool | Qt::FramelessWindowHint);// | Qt::FramelessWindowHint);
+	this->setWindowFlags(Qt::CustomizeWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);// | Qt::FramelessWindowHint);
 	ui->pbEnter->setCursor(QCursor(Qt::PointingHandCursor));
 	ui->pbLeave->setCursor(QCursor(Qt::PointingHandCursor));
 	ui->stackedWidget->setCurrentIndex((int)Page::Main);
@@ -153,6 +153,7 @@ void QBookkeepingWatchdog::enter()
 	QDate cd = QDate::currentDate();
 
 	trayState = State::Nan;
+	hideBlock = false;
 
 	if (!leaveTimer.isActive())
 	{
@@ -230,6 +231,7 @@ void QBookkeepingWatchdog::leave()
 		ui->tableDay->scrollToBottom();
 		setIcon(resTimeAFK);
 		trayState = State::AFK;
+		hideBlock = true;
 	}
 }
 
@@ -247,6 +249,7 @@ void QBookkeepingWatchdog::leaveTick()
 		blockTimer.start(leaveTimerInterval);
 		setIcon(resTimeAFK);
 		trayState = State::AFK;
+		hideBlock = true;
 	}
 	else
 	{
@@ -477,6 +480,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 			{
 				trayState = State::AFK;
 				setIcon(resTimeAFK);
+				hideBlock = true;
 			}
 		}
 		if (dateIt >= weekBegin && dateIt <= weekEnd) // За неделю

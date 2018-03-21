@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 	QBookkeepingWatchdog w;
-	//w.show();
+	w.showWindow();
 
 	return a.exec();
 }

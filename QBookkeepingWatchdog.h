@@ -24,6 +24,7 @@ class QBookkeepingWatchdog : public QMainWindow
 public:
 	explicit QBookkeepingWatchdog(QWidget *parent = 0);
 	~QBookkeepingWatchdog();
+	void showWindow();
 
 private:
 	Ui::QBookkeepingWatchdog *ui;
@@ -51,7 +52,6 @@ private:
 	void setDefaults();
 	void setTray();
 	void updateWindow();
-	void showWindow();
 
 	void addServiceRow(QString text);
 	void updateServiceRow(QString time);
