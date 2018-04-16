@@ -41,7 +41,8 @@ FORMS += \
 
 DISTFILES += \
     README.MD \
-    TODO
+    TODO \
+    LICENSE.md
 
 RESOURCES += \
     resources.qrc

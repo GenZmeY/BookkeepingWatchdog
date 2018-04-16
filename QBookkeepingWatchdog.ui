@@ -38,9 +38,21 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>330</width>
+      <width>332</width>
       <height>475</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777215</width>
+      <height>475</height>
+     </size>
     </property>
     <property name="frameShape">
      <enum>QFrame::StyledPanel</enum>
@@ -49,7 +61,7 @@
      <number>0</number>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="pageMain">
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -246,7 +258,7 @@
          <number>2</number>
         </property>
         <attribute name="horizontalHeaderVisible">
-         <bool>true</bool>
+         <bool>false</bool>
         </attribute>
         <attribute name="horizontalHeaderDefaultSectionSize">
          <number>144</number>
@@ -408,7 +420,7 @@
     <widget class="QWidget" name="pageSettings">
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="gbSettings">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
@@ -450,37 +462,87 @@
            </item>
           </layout>
          </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Расчет времени:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="cbCalcPeriod"/>
+           </item>
+          </layout>
+         </item>
         </layout>
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox_3">
+       <widget class="QGroupBox" name="gbWarnings">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Примечание</string>
+         <string>Оповещения:</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <item>
-          <widget class="QLabel" name="notes">
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cbWarnWork">
            <property name="text">
-            <string>Задержка - время в секундах, необходимое для преодоления расстояния между турникетом и этим компьютером.</string>
+            <string>Есть недоработка</string>
            </property>
-           <property name="textFormat">
-            <enum>Qt::PlainText</enum>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="cbWarnEat">
+           <property name="text">
+            <string>Обед</string>
            </property>
-           <property name="scaledContents">
-            <bool>false</bool>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="cbWarnDone">
+           <property name="text">
+            <string>Недоработка покрыта</string>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="cbWarnPrepayment">
+           <property name="text">
+            <string>Аванс</string>
            </property>
-           <property name="wordWrap">
-            <bool>true</bool>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QCheckBox" name="cbWarnHome">
+           <property name="text">
+            <string>Пора домой</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QCheckBox" name="cbWarnPayday">
+           <property name="text">
+            <string>Зарплата</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QCheckBox" name="cbWarnNkt">
+           <property name="text">
+            <string>Есть переработка</string>
            </property>
           </widget>
          </item>
@@ -488,7 +550,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox_2">
+       <widget class="QGroupBox" name="gbAbout">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
@@ -498,6 +560,49 @@
         <property name="title">
          <string>О программе</string>
         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>9</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>9</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lbAbout">
+           <property name="text">
+            <string>Утилита для наблюдения за своим рабочим временем.
+
+Задержка - время, необходимое чтобы добраться от компьютера до турникета
+Расчет времени - позволяет выбрать на основе какого промежутка времени будет происходить расчет времени (Месяц/Неделя/День). Влияет только на цвет иконки в трее
+
+https://github.com/GenZmeY/BookkeepingWatchdog
+Copyright (c) 2018 GenZmeY
+Apache License Version 2.0</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::AutoText</enum>
+           </property>
+           <property name="scaledContents">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
