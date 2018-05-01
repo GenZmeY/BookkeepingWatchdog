@@ -11,6 +11,7 @@
 #include <QString>
 #include <QDate>
 #include <QVariant>
+#include <QSettings>
 
 #include "Structs.h"
 #include "SqlQueries.h"
@@ -26,19 +27,22 @@ public:  // Init
 
 private: // Init
 	bool prepare();           // Инициализация БД
+	void readSettings();      // Чтение настроек
 
 public:  // Get
 	SDayInfo dayInfo(QDate _date); // Информация за указанный день
-	int timeout();           // Время между отрыванием задницы от стула и проходом через турникет (в секундах)
+	SSettings settings();
 	QDate minDate();           // Минимальная дата
 
 public:  // Set
-	void setSettings(int _timeout);
+	void setSettings(SSettings _settings);
 	void addTimeEvent(QDate _date, QTime _time, Event _event);
 	void updateDayInfo(QDate _date, bool _nonWorking, int _correction);
 
 private:
 	QSqlDatabase db;
+	QSettings *conf;
+	SSettings confCache;
 };
 
 #endif // QLOCALDATABASE_H

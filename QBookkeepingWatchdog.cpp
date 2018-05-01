@@ -159,9 +159,9 @@ void QBookkeepingWatchdog::enter()
 	{
 		int lastLeave = 0;
 		if (!db.dayInfo(cd).timeEvent.isEmpty())
-			lastLeave = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000;
+			lastLeave = db.dayInfo(cd).timeEvent.lastKey();
 
-		db.addTimeEvent(cd, QTime::currentTime().addSecs(db.timeout()*(-1)),Event::Enter);
+		db.addTimeEvent(cd, QTime::currentTime().addSecs(db.settings().timeout*(-1)),Event::Enter);
 		updateMainWindow(cd);
 		ui->tableDay->scrollToBottom();
 
@@ -185,7 +185,7 @@ void QBookkeepingWatchdog::enter()
 
 			int diff = 0;
 			if (!db.dayInfo(cd).timeEvent.isEmpty())
-				diff = db.dayInfo(cd).timeEvent.lastKey().msecsSinceStartOfDay()/1000 - lastLeave;
+				diff = db.dayInfo(cd).timeEvent.lastKey() - lastLeave;
 
 			if (!warnEat && diff >= 30*60 && diff <= 75*60 && lastLeave >= 11*60*60 && lastLeave <= 15*60*60)
 				QTimer::singleShot(3000,this,SLOT(showWarnEat()));
@@ -217,7 +217,7 @@ void QBookkeepingWatchdog::leave()
 	enableLeave(false);
 	enableEnter();
 	hideBlock = true;
-	if (db.timeout())
+	if (db.settings().timeout)
 	{
 		addServiceRow("Ожидание выхода");
 		leaveTimer.start(leaveTimerInterval);
@@ -237,7 +237,7 @@ void QBookkeepingWatchdog::leave()
 void QBookkeepingWatchdog::leaveTick()
 {
 	timerProgress += 1; // секунды
-	if (timerProgress >= db.timeout())
+	if (timerProgress >= db.settings().timeout)
 	{
 		leaveTimer.stop();
 		timerProgress = 0;
@@ -250,14 +250,14 @@ void QBookkeepingWatchdog::leaveTick()
 	}
 	else
 	{
-		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.timeout()*1000).addSecs((-1)*timerProgress).toString());
+		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).addSecs((-1)*timerProgress).toString());
 	}
 }
 
 void QBookkeepingWatchdog::blockTick()
 {
 	timerProgress += 1; // секунды
-	if (timerProgress >= db.timeout())
+	if (timerProgress >= db.settings().timeout)
 	{
 		blockTimer.stop();
 		timerProgress = 0;
@@ -269,20 +269,26 @@ void QBookkeepingWatchdog::blockTick()
 	}
 	else
 	{
-		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.timeout()*1000).addSecs((-1)*timerProgress).toString());
+		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).addSecs((-1)*timerProgress).toString());
 	}
 }
 
 void QBookkeepingWatchdog::settings()
 {
-	ui->timeout->setTime(QTime::fromMSecsSinceStartOfDay(db.timeout()*1000));
+	ui->timeout->setTime(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000));
 	ui->stackedWidget->setCurrentIndex((int)Page::Settings);
 	showWindow();
 }
 
 void QBookkeepingWatchdog::accept()
 {
-	db.setSettings(ui->timeout->time().msecsSinceStartOfDay()/1000);
+	SSettings s;
+
+	s.timeout = ui->timeout->time().msecsSinceStartOfDay()/1000;
+
+	// TODO
+
+	db.setSettings(s);
 	ui->pbAccept->setEnabled(false);
 }
 
@@ -333,11 +339,11 @@ void QBookkeepingWatchdog::updateMainWindow(QDate _date)
 	ui->tableDay->setHorizontalHeaderLabels(QStringList() << "Время" << "Событие");
 
 	// Очищать память не нужно, это делает QTableWidget::clear()
-	QMapIterator<QTime, Event> it(selected.timeEvent);
+	QMapIterator<int, Event> it(selected.timeEvent);
 	for (int row = 0; it.hasNext(); row++)
 	{
 		it.next();
-		QTableWidgetItem *cTimeItem = new QTableWidgetItem(it.key().toString());
+		QTableWidgetItem *cTimeItem = new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(it.key()*1000).toString());
 		QTableWidgetItem *cEventItem = new QTableWidgetItem(it.value() == Event::Enter ? "Вход" : "Выход");
 		cTimeItem->setTextAlignment(Qt::AlignCenter);
 		cEventItem->setTextAlignment(Qt::AlignCenter);
@@ -360,7 +366,7 @@ void QBookkeepingWatchdog::updateMainWindow(QDate _date)
 
 void QBookkeepingWatchdog::settingsChanged(QTime _timeout)
 {
-	ui->pbAccept->setEnabled(db.timeout() != _timeout.msecsSinceStartOfDay()/1000);
+	ui->pbAccept->setEnabled(db.settings().timeout != _timeout.msecsSinceStartOfDay()/1000);
 }
 
 void QBookkeepingWatchdog::showWindow()
@@ -386,7 +392,7 @@ void QBookkeepingWatchdog::showWindow()
 void QBookkeepingWatchdog::addServiceRow(QString text)
 {
 	ui->tableDay->insertRow(ui->tableDay->rowCount());
-	QTableWidgetItem *cTimeItem = new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(db.timeout()*1000).toString());
+	QTableWidgetItem *cTimeItem = new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).toString());
 	QTableWidgetItem *cEventItem = new QTableWidgetItem(text);
 	cTimeItem->setTextAlignment(Qt::AlignCenter);
 	cEventItem->setTextAlignment(Qt::AlignCenter);
@@ -462,11 +468,11 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 	{
 		SDayInfo date = db.dayInfo(dateIt);
 
-		int workToday = date.workTotal + date.correction;
+		int workToday = date.workTotal();
 
 		// Текущая наработка
 		if (dateIt == cd && !date.timeEvent.isEmpty() && date.timeEvent.last() == Event::Enter)
-			workToday += QTime::currentTime().msecsSinceStartOfDay()/1000 - date.timeEvent.lastKey().msecsSinceStartOfDay()/1000;
+			workToday += QTime::currentTime().msecsSinceStartOfDay()/1000 - date.timeEvent.lastKey();
 
 		if (dateIt == _date) // За день
 		{
@@ -636,9 +642,7 @@ QDate QBookkeepingWatchdog::paydayCorrected(int day)
 	QDate cd = QDate::currentDate();
 	QDate payday = QDate(cd.year(),cd.month(),day);
 
-	for (int count = 0; ; count++)
-	{
-		if (!db.dayInfo(payday.addDays((-1)*count)).nonWorking) return payday.addDays((-1)*count);
-		if (!db.dayInfo(payday.addDays(     count)).nonWorking) return payday.addDays(     count);
-	}
+	for (int count = 0; ; count--)
+		if (!db.dayInfo(payday.addDays(count)).nonWorking)
+			return payday.addDays(count);
 }

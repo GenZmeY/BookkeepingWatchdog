@@ -56,6 +56,13 @@ enum class State : int
 	AFK        = 4
 };
 
+enum class Period : int
+{
+	Month      = 0,
+	Week       = 1,
+	Day        = 2
+};
+
 // PushButtons Style Sheet
 
 const QString pbEnterStyle = "\

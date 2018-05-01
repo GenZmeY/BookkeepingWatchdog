@@ -7,6 +7,9 @@ QLocalDataBase::QLocalDataBase(QObject *parent) : QObject(parent)
 
 bool QLocalDataBase::connect()
 {
+	conf = new QSettings(qApp->applicationDirPath() + "/settings.conf", QSettings::IniFormat);
+	readSettings();
+
 	db = QSqlDatabase::addDatabase("QSQLITE");
 	QString dbName(qApp->applicationDirPath() + "/db.sqlite");
 	QFile dbFile(dbName);
@@ -21,6 +24,7 @@ bool QLocalDataBase::connect()
 		if (db.open()) { return prepare(); }
 		else QMessageBox::critical(0, "Ошибка", QString("Не удается подключиться к локальной БД.\n%1").arg(db.lastError().text()), QMessageBox::Ok);
 	}
+
 	return false;
 }
 
@@ -31,7 +35,6 @@ bool QLocalDataBase::prepare()
 	EXEC_QUERY(CREATE_TABLE_SETTINGS,false);
 	EXEC_QUERY(CREATE_TABLE_DAY,false);
 	EXEC_QUERY(CREATE_TABLE_TIME,false);
-	EXEC_QUERY(INSERT_DEF_SETTINGS,false);
 
 	QDate cd = QDate::currentDate();
 	QDate monthBegin = QDate(cd.year(),cd.month(),1);
@@ -58,14 +61,13 @@ SDayInfo QLocalDataBase::dayInfo(QDate _date)
 	{
 		selectedDate.nonWorking = query.value("NonWorking").toBool();
 		selectedDate.correction = query.value("Correction").toInt();
-		selectedDate.workTotal  = query.value("WorkTotal").toInt();
 
 		EXEC_QUERY(QString(SELECT_TIME_OF_DAY).arg(_date.toJulianDay()),selectedDate);
 		while (query.next())
 		{
 			int time = query.value("Time").toInt();
 			Event event = (Event)query.value("Event").toInt();
-			selectedDate.timeEvent.insert(QTime::fromMSecsSinceStartOfDay(time*1000),event);
+			selectedDate.timeEvent.insert(time,event);
 		}
 
 		if  (_date < QDate::currentDate() &&
@@ -74,7 +76,7 @@ SDayInfo QLocalDataBase::dayInfo(QDate _date)
 			) // Кто то забыл нажать кнопку
 		{
 			addTimeEvent(_date,QTime(23,59,59),Event::Leave);
-			selectedDate.timeEvent.insert(QTime(23,59,59),Event::Leave);
+			selectedDate.timeEvent.insert(QTime(23,59,59).msecsSinceStartOfDay(),Event::Leave);
 		}
 	}
 	else // Нет записи об этом дне
@@ -87,29 +89,13 @@ SDayInfo QLocalDataBase::dayInfo(QDate _date)
 	return selectedDate;
 }
 
-int QLocalDataBase::timeout()
-{
-	QSqlQuery query;
-
-	EXEC_QUERY(GET_SETTINGS,0); query.first();
-
-	return (query.value("Timeout").toInt());
-}
-
 QDate QLocalDataBase::minDate()
 {
 	QSqlQuery query;
 
-	EXEC_QUERY(GET_SETTINGS,QDate()); query.first();
+	EXEC_QUERY(GET_MINDATE,QDate()); query.first();
 
 	return (QDate::fromJulianDay(query.value("MinDate").toLongLong()));
-}
-
-void QLocalDataBase::setSettings(int _timeout)
-{
-	QSqlQuery query;
-
-	EXEC_QUERY(QString(UPDATE_SETTINGS).arg(_timeout),);
 }
 
 void QLocalDataBase::addTimeEvent(QDate _date, QTime _time, Event _event)
@@ -122,16 +108,6 @@ void QLocalDataBase::addTimeEvent(QDate _date, QTime _time, Event _event)
 	}
 
 	EXEC_QUERY(QString(ADD_EVENT).arg(_date.toJulianDay()).arg(_time.msecsSinceStartOfDay()/1000).arg((int)_event),);
-
-	if (_event == Event::Leave)
-	{
-		EXEC_QUERY(QString(SELECT_LAST_TIMES).arg(_date.toJulianDay()),);
-		query.first();
-		int lastEnterTime = query.value("MAX(t.Time)").toInt();
-		int workTotal = query.value("WorkTotal").toInt();
-		workTotal += (_time.msecsSinceStartOfDay()/1000 - lastEnterTime);
-		EXEC_QUERY(QString(UPDATE_WORK_TOTAL).arg(workTotal).arg(_date.toJulianDay()),);
-	}
 }
 
 void QLocalDataBase::updateDayInfo(QDate _date, bool _nonWorking, int _correction)
@@ -147,4 +123,39 @@ void QLocalDataBase::updateDayInfo(QDate _date, bool _nonWorking, int _correctio
 	{
 		EXEC_QUERY(QString(INSERT_DAY).arg(_date.toJulianDay()).arg((int)_nonWorking).arg(_correction),);
 	}
+}
+
+// Conf:
+
+void QLocalDataBase::readSettings()
+{
+	confCache.timeout = conf->value("Main/Timeout", 120).toInt();
+	confCache.period = (Period)conf->value("Main/Period", 0).toInt();
+	confCache.warnDone = conf->value("Warnings/Done", true).toBool();
+	confCache.warnEat = conf->value("Warnings/Eat", true).toBool();
+	confCache.warnHome = conf->value("Warnings/Home", true).toBool();
+	confCache.warnNkt = conf->value("Warnings/Nkt", true).toBool();
+	confCache.warnPayday = conf->value("Warnings/Payday", true).toBool();
+	confCache.warnPrepayment = conf->value("Warnings/Prepayment", true).toBool();
+	confCache.warnWork = conf->value("Warnings/Work", true).toBool();
+}
+
+void QLocalDataBase::setSettings(SSettings _settings)
+{
+	conf->setValue("Main/Timeout", _settings.timeout);
+	conf->setValue("Main/Period", (int)_settings.period);
+	conf->setValue("Warnings/Done", _settings.warnDone);
+	conf->setValue("Warnings/Eat", _settings.warnEat);
+	conf->setValue("Warnings/Home", _settings.warnHome);
+	conf->setValue("Warnings/Nkt", _settings.warnNkt);
+	conf->setValue("Warnings/Payday", _settings.warnPayday);
+	conf->setValue("Warnings/Prepayment", _settings.warnPrepayment);
+	conf->setValue("Warnings/Work", _settings.warnWork);
+	confCache = _settings;
+	conf->sync();
+}
+
+SSettings QLocalDataBase::settings()
+{
+	return confCache;
 }

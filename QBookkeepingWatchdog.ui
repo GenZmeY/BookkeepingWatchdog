@@ -472,7 +472,29 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="cbCalcPeriod"/>
+            <widget class="QComboBox" name="cbCalcPeriod">
+             <property name="currentText">
+              <string>Месяц</string>
+             </property>
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>Месяц</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Неделя</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>День</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>
