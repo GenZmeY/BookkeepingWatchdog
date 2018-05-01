@@ -36,7 +36,6 @@ private:
 	QTimer blockTimer;
 	QTimer statUpdateTimer;
 	int timerProgress;
-	bool warningsEnabled;
 	State trayState;
 
 	bool warnPayday;
@@ -75,7 +74,7 @@ private slots:
 	void back();
 	void dayInfoChanged();
 	void updateMainWindow(QDate _date);
-	void settingsChanged(QTime _timeout);
+	void settingsChanged();
 	void leaveTick();
 	void blockTick();
 	void statUpdateTick();

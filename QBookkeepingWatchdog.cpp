@@ -7,9 +7,6 @@ QBookkeepingWatchdog::QBookkeepingWatchdog(QWidget *parent) :
 {
 	ui->setupUi(this);
 
-	if (qApp->arguments().size() >= 2)
-		warningsEnabled = (qApp->arguments().at(1) == "--with-warnings");
-
 	setTray();
 	setConnections();
 	setDefaults();
@@ -19,6 +16,10 @@ QBookkeepingWatchdog::QBookkeepingWatchdog(QWidget *parent) :
 		qApp->quit(); // TODO: не работает, заменить
 		enableInterface(false);
 	}
+
+
+	if (qApp->arguments().size() >= 2)
+		db.setWarnings(qApp->arguments().at(1) == "--with-warnings");
 
 	statUpdateTimer.start(statUpdateTimerInterval);
 	updateMainWindow(QDate::currentDate());
@@ -49,8 +50,18 @@ void QBookkeepingWatchdog::setConnections()
 	connect(ui->calendar    , SIGNAL(clicked     (QDate)), this, SLOT(updateMainWindow(QDate)));
 	connect(ui->correction  , SIGNAL(timeChanged (QTime)), this, SLOT(dayInfoChanged  (     )));
 	connect(ui->nonWorking  , SIGNAL(clicked     (bool )), this, SLOT(dayInfoChanged  (     )));
-	connect(ui->timeout     , SIGNAL(timeChanged (QTime)), this, SLOT(settingsChanged (QTime)));
 	connect(ui->correctionSign, SIGNAL(clicked   (bool )), this, SLOT(correctionSignChanged()));
+
+	// Settings
+	connect(ui->timeout     , SIGNAL(timeChanged (QTime)), this, SLOT(settingsChanged (     )));
+	connect(ui->cbCalcPeriod, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged( )));
+	connect(ui->cbWarnDone,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnEat ,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnHome,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnNkt ,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnPayday, SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnPrepayment,SIGNAL(stateChanged(int)),this, SLOT(settingsChanged(      )));
+	connect(ui->cbWarnWork,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
 
 	// Timers
 	connect(&blockTimer     , SIGNAL(timeout     (     )), this, SLOT(blockTick       (     )));
@@ -167,7 +178,7 @@ void QBookkeepingWatchdog::enter()
 
 		SDayInfo scd = db.dayInfo(cd);
 
-		if (warningsEnabled)
+		if (db.settings().warnEnabled)
 		{
 			if (scd.timeEvent.size() == 1)
 			{
@@ -276,6 +287,18 @@ void QBookkeepingWatchdog::blockTick()
 void QBookkeepingWatchdog::settings()
 {
 	ui->timeout->setTime(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000));
+
+	ui->cbCalcPeriod->setCurrentIndex((int)db.settings().period);
+
+	ui->gbWarnings->setEnabled(db.settings().warnEnabled);
+	ui->cbWarnDone->setChecked(db.settings().warnDone);
+	ui->cbWarnEat->setChecked(db.settings().warnEat);
+	ui->cbWarnHome->setChecked(db.settings().warnHome);
+	ui->cbWarnNkt->setChecked(db.settings().warnNkt);
+	ui->cbWarnPayday->setChecked(db.settings().warnPayday);
+	ui->cbWarnPrepayment->setChecked(db.settings().warnPrepayment);
+	ui->cbWarnWork->setChecked(db.settings().warnWork);
+
 	ui->stackedWidget->setCurrentIndex((int)Page::Settings);
 	showWindow();
 }
@@ -285,8 +308,14 @@ void QBookkeepingWatchdog::accept()
 	SSettings s;
 
 	s.timeout = ui->timeout->time().msecsSinceStartOfDay()/1000;
-
-	// TODO
+	s.period = (Period)ui->cbCalcPeriod->currentIndex();
+	s.warnDone = (ui->cbWarnDone->checkState() == Qt::Checked);
+	s.warnEat = (ui->cbWarnEat->checkState() == Qt::Checked);
+	s.warnHome = (ui->cbWarnHome->checkState() == Qt::Checked);
+	s.warnNkt = (ui->cbWarnNkt->checkState() == Qt::Checked);
+	s.warnPayday = (ui->cbWarnPayday->checkState() == Qt::Checked);
+	s.warnPrepayment = (ui->cbWarnPrepayment->checkState() == Qt::Checked);
+	s.warnWork = (ui->cbWarnWork->checkState() == Qt::Checked);
 
 	db.setSettings(s);
 	ui->pbAccept->setEnabled(false);
@@ -364,9 +393,21 @@ void QBookkeepingWatchdog::updateMainWindow(QDate _date)
 	}
 }
 
-void QBookkeepingWatchdog::settingsChanged(QTime _timeout)
+void QBookkeepingWatchdog::settingsChanged()
 {
-	ui->pbAccept->setEnabled(db.settings().timeout != _timeout.msecsSinceStartOfDay()/1000);
+	SSettings s = db.settings();
+	ui->pbAccept->setEnabled
+	(
+	    s.timeout        != ui->timeout->time().msecsSinceStartOfDay()/1000     ||
+	    s.period         != (Period)ui->cbCalcPeriod->currentIndex()            ||
+	    s.warnDone       != (ui->cbWarnDone      ->checkState() == Qt::Checked) ||
+	    s.warnEat        != (ui->cbWarnEat       ->checkState() == Qt::Checked) ||
+	    s.warnHome       != (ui->cbWarnHome      ->checkState() == Qt::Checked) ||
+	    s.warnNkt        != (ui->cbWarnNkt       ->checkState() == Qt::Checked) ||
+	    s.warnPayday     != (ui->cbWarnPayday    ->checkState() == Qt::Checked) ||
+	    s.warnPrepayment != (ui->cbWarnPrepayment->checkState() == Qt::Checked) ||
+	    s.warnWork       != (ui->cbWarnWork      ->checkState() == Qt::Checked)
+	);
 }
 
 void QBookkeepingWatchdog::showWindow()
@@ -548,7 +589,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		{
 			setIcon(resTimeNormal);
 			setStat(ui->lbWeekStat,diffWeek,"Black");
-			if (warningsEnabled && !warnDone && trayState == State::Bad)
+			if (db.settings().warnEnabled && !warnDone && trayState == State::Bad)
 				QTimer::singleShot(1000,this,SLOT(showWarnDone()));
 			trayState = State::Normal;
 		}
@@ -556,8 +597,8 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 		{
 			setIcon(resTimeGood);
 			setStat(ui->lbWeekStat,diffWeek,"Green");
-			if (!warnHome && warningsEnabled && trayState == State::Normal) QTimer::singleShot(1000,this,SLOT(showWarnHome()));
-			if (!warnNkt  && warningsEnabled && trayState == State::Normal) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
+			if (!warnHome && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(1000,this,SLOT(showWarnHome()));
+			if (!warnNkt  && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
 			trayState = State::Good;
 		}
 	}

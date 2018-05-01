@@ -159,3 +159,8 @@ SSettings QLocalDataBase::settings()
 {
 	return confCache;
 }
+
+void QLocalDataBase::setWarnings(bool enabled)
+{
+	confCache.warnEnabled = enabled;
+}

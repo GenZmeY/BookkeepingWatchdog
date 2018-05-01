@@ -38,6 +38,7 @@ public:  // Set
 	void setSettings(SSettings _settings);
 	void addTimeEvent(QDate _date, QTime _time, Event _event);
 	void updateDayInfo(QDate _date, bool _nonWorking, int _correction);
+	void setWarnings(bool enabled);
 
 private:
 	QSqlDatabase db;
