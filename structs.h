@@ -41,7 +41,9 @@ struct SSettings // Настройки
 {
 	int    timeout;
 	Period period;
+
 	bool   warnEnabled = false;
+
 	bool   warnPayday;
 	bool   warnPrepayment;
 	bool   warnNkt;

@@ -29,7 +29,6 @@ QBookkeepingWatchdog::~QBookkeepingWatchdog()
 {
 	statUpdateTimer.stop();
 	leaveTimer.stop();
-	blockTimer.stop();
 
 	delete trayIcon;
 	delete trayIconMenu;
@@ -64,7 +63,6 @@ void QBookkeepingWatchdog::setConnections()
 	connect(ui->cbWarnWork,   SIGNAL(stateChanged(int)),   this, SLOT(settingsChanged(      )));
 
 	// Timers
-	connect(&blockTimer     , SIGNAL(timeout     (     )), this, SLOT(blockTick       (     )));
 	connect(&leaveTimer     , SIGNAL(timeout     (     )), this, SLOT(leaveTick       (     )));
 	connect(&statUpdateTimer, SIGNAL(timeout     (     )), this, SLOT(statUpdateTick  (     )));
 
@@ -230,7 +228,7 @@ void QBookkeepingWatchdog::leave()
 	hideBlock = true;
 	if (db.settings().timeout)
 	{
-		addServiceRow("Ожидание выхода");
+		addServiceRow("Ожидание...");
 		leaveTimer.start(leaveTimerInterval);
 		ui->tableDay->scrollToBottom();
 	}
@@ -248,39 +246,21 @@ void QBookkeepingWatchdog::leave()
 void QBookkeepingWatchdog::leaveTick()
 {
 	timerProgress += 1; // секунды
-	if (timerProgress >= db.settings().timeout)
+	if (timerProgress >= (db.settings().timeout * 2))
 	{
 		leaveTimer.stop();
 		timerProgress = 0;
-		db.addTimeEvent(QDate::currentDate(),QTime::currentTime(),Event::Leave);
-		removeServiceRow();
-		addServiceRow("Блокировка входа");
-		enableEnter(false);
-		blockTimer.start(leaveTimerInterval);
-		setIcon(State::AFK);
-	}
-	else
-	{
-		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).addSecs((-1)*timerProgress).toString());
-	}
-}
-
-void QBookkeepingWatchdog::blockTick()
-{
-	timerProgress += 1; // секунды
-	if (timerProgress >= db.settings().timeout)
-	{
-		blockTimer.stop();
-		timerProgress = 0;
+		db.addTimeEvent(QDate::currentDate(),QTime::currentTime().addSecs(db.settings().timeout*(-1)),Event::Leave);
 		removeServiceRow();
 		updateMainWindow(QDate::currentDate());
 		enableInterface();
 		enableEnter();
 		ui->tableDay->scrollToBottom();
+		setIcon(State::AFK);
 	}
 	else
 	{
-		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).addSecs((-1)*timerProgress).toString());
+		updateServiceRow(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000*2).addSecs((-1)*timerProgress).toString());
 	}
 }
 
@@ -351,7 +331,7 @@ void QBookkeepingWatchdog::dayInfoChanged()
 
 void QBookkeepingWatchdog::updateMainWindow(QDate _date)
 {
-	if (blockTimer.isActive() || leaveTimer.isActive()) return;
+	if (leaveTimer.isActive()) return;
 	enableEdit(_date <= QDate::currentDate() && _date >= db.minDate());
 
 	if (_date >= QDate::currentDate()) // немного рушит логику функций...
@@ -439,7 +419,7 @@ void QBookkeepingWatchdog::showWindow()
 void QBookkeepingWatchdog::addServiceRow(QString text)
 {
 	ui->tableDay->insertRow(ui->tableDay->rowCount());
-	QTableWidgetItem *cTimeItem = new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000).toString());
+	QTableWidgetItem *cTimeItem = new QTableWidgetItem(QTime::fromMSecsSinceStartOfDay(db.settings().timeout*1000*2).toString());
 	QTableWidgetItem *cEventItem = new QTableWidgetItem(text);
 	cTimeItem->setTextAlignment(Qt::AlignCenter);
 	cEventItem->setTextAlignment(Qt::AlignCenter);

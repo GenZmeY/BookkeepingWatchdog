@@ -33,7 +33,6 @@ private:
 	bool trayEventBlock;
 	bool hideBlock;
 	QTimer leaveTimer;
-	QTimer blockTimer;
 	QTimer statUpdateTimer;
 	int timerProgress;
 	State trayState;
@@ -76,7 +75,6 @@ private slots:
 	void updateMainWindow(QDate _date);
 	void settingsChanged();
 	void leaveTick();
-	void blockTick();
 	void statUpdateTick();
 	void statCalc(QDate _date);
 	void correctionSignChanged();
