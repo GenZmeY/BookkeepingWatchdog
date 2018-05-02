@@ -163,7 +163,7 @@ void QBookkeepingWatchdog::enter()
 {
 	QDate cd = QDate::currentDate();
 
-	trayState = State::Nan;
+	trayState = State::Nan; // ??? Зачем я это делал ???
 	hideBlock = false;
 
 	if (!leaveTimer.isActive())
@@ -241,7 +241,7 @@ void QBookkeepingWatchdog::leave()
 		enableInterface();
 		enableEnter();
 		ui->tableDay->scrollToBottom();
-		trayState = State::AFK;
+		setIcon(State::AFK);
 	}
 }
 
@@ -257,7 +257,7 @@ void QBookkeepingWatchdog::leaveTick()
 		addServiceRow("Блокировка входа");
 		enableEnter(false);
 		blockTimer.start(leaveTimerInterval);
-		trayState = State::AFK;
+		setIcon(State::AFK);
 	}
 	else
 	{
@@ -317,7 +317,13 @@ void QBookkeepingWatchdog::accept()
 	s.warnPrepayment = (ui->cbWarnPrepayment->checkState() == Qt::Checked);
 	s.warnWork = (ui->cbWarnWork->checkState() == Qt::Checked);
 
-	db.setSettings(s);
+	if (s.period != db.settings().period)
+	{
+		db.setSettings(s);
+		statCalc(QDate::currentDate());
+	}
+	else db.setSettings(s);
+
 	ui->pbAccept->setEnabled(false);
 }
 
@@ -522,7 +528,7 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 
 			if (_date == cd && (date.timeEvent.isEmpty() || (!date.timeEvent.isEmpty() && date.timeEvent.last() == Event::Leave)))
 			{
-				trayState = State::AFK;
+				setIcon(State::AFK);
 				hideBlock = true;
 			}
 		}
@@ -566,11 +572,20 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 	if (cd >= monthBegin && cd <= monthEnd)
 	{
 		if (diffMonth + workDayRequiredStandart < 0)
+		{
 			setStat(ui->lbMonthStat,diffMonth,"Red");
+			if (db.settings().period == Period::Month) setIcon(State::Bad);
+		}
 		else if (diffMonth + workDayRequiredStandart >= 0 && diffMonth < 0)
+		{
 			setStat(ui->lbMonthStat,diffMonth,"Black");
+			if (db.settings().period == Period::Month) setIcon(State::Normal);
+		}
 		else
+		{
 			setStat(ui->lbMonthStat,diffMonth,"Green");
+			if (db.settings().period == Period::Month) setIcon(State::Good);
+		}
 	}
 	else
 	{
@@ -581,25 +596,18 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 	{
 		if (diffWeek + workDayRequiredStandart < 0)
 		{
-			setIcon(resTimeBad);
 			setStat(ui->lbWeekStat,diffWeek,"Red");
-			trayState = State::Bad;
+			if (db.settings().period == Period::Week) setIcon(State::Bad);
 		}
 		else if (diffWeek + workDayRequiredStandart >= 0 && diffWeek < 0)
 		{
-			setIcon(resTimeNormal);
 			setStat(ui->lbWeekStat,diffWeek,"Black");
-			if (db.settings().warnEnabled && !warnDone && trayState == State::Bad)
-				QTimer::singleShot(1000,this,SLOT(showWarnDone()));
-			trayState = State::Normal;
+			if (db.settings().period == Period::Week) setIcon(State::Normal);
 		}
 		else
 		{
-			setIcon(resTimeGood);
 			setStat(ui->lbWeekStat,diffWeek,"Green");
-			if (!warnHome && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(1000,this,SLOT(showWarnHome()));
-			if (!warnNkt  && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
-			trayState = State::Good;
+			if (db.settings().period == Period::Week) setIcon(State::Good);
 		}
 	}
 	else
@@ -610,9 +618,15 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 	if (ui->calendar->selectedDate() == cd && _date == cd)
 	{
 		if (diffDay < 0)
+		{
 			setStat(ui->lbDayStat,diffDay,"Black");
+			if (db.settings().period == Period::Day) setIcon(State::Normal);
+		}
 		else
+		{
 			setStat(ui->lbDayStat,diffDay,"Green");
+			if (db.settings().period == Period::Day) setIcon(State::Good);
+		}
 	}
 	else if (ui->calendar->selectedDate() == _date)
 	{	
@@ -620,9 +634,31 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 	}
 }
 
-void QBookkeepingWatchdog::setIcon(QString ico)
+void QBookkeepingWatchdog::setIcon(State _state)
 {
-	trayIcon->setIcon(QIcon(ico));
+	switch (_state)
+	{
+	    case State::AFK:
+		    //trayIcon->setIcon(QIcon(resTimeAFK));
+		break;
+	    case State::Bad:
+		    trayIcon->setIcon(QIcon(resTimeBad));
+		break;
+	    case State::Good:
+		    trayIcon->setIcon(QIcon(resTimeGood));
+			if (!warnHome && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(1000,this,SLOT(showWarnHome()));
+			if (!warnNkt  && db.settings().warnEnabled && trayState == State::Normal) QTimer::singleShot(warningTimerInterval,this,SLOT(showWarnNkt()));
+		break;
+	    case State::Normal:
+		    trayIcon->setIcon(QIcon(resTimeNormal));
+			if (db.settings().warnEnabled && !warnDone && trayState == State::Bad)
+				QTimer::singleShot(1000,this,SLOT(showWarnDone()));
+		break;
+	    default:
+		    trayIcon->setIcon(QIcon(resIcon));
+		break;
+	}
+	trayState = _state;
 	trayIcon->show();
 }
 

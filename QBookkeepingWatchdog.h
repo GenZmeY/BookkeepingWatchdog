@@ -61,7 +61,7 @@ private:
 	void enableLeave(bool enable = true);
 	void enableEdit(bool enable = true);
 
-	void setIcon(QString ico);
+	void setIcon(State _state);
 	void setStat(QLabel *lb, int sec, QString color = "");
 
 	QDate paydayCorrected(int day);
