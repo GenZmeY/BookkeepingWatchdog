@@ -74,13 +74,13 @@ void QBookkeepingWatchdog::setConnections()
 	connect(trayIcon        , SIGNAL(activated   (QSystemTrayIcon::ActivationReason)), this, SLOT(trayIconActivated(QSystemTrayIcon::ActivationReason)));
 }
 
-void QBookkeepingWatchdog::showWarnPayday    () { showWarning(QTime::currentTime().msecsSinceStartOfDay() % 2 == 0 ? resPayDay1 : resPayDay2); warnPayday = true; }
-void QBookkeepingWatchdog::showWarnNkt       () { showWarning(resNkt);        warnNkt        = true; }
-void QBookkeepingWatchdog::showWarnPrepayment() { showWarning(resPrepayment); warnPrepayment = true; }
-void QBookkeepingWatchdog::showWarnHome      () { showWarning(resHome);       warnHome       = true; }
-void QBookkeepingWatchdog::showWarnWork      () { showWarning(resWork,7500);  warnWork       = true; }
-void QBookkeepingWatchdog::showWarnDone      () { showWarning(resDone);       warnDone       = true; }
-void QBookkeepingWatchdog::showWarnEat       () { showWarning(resEat,6600);   warnEat        = true; }
+void QBookkeepingWatchdog::showWarnPayday    () { if (db.settings().warnPayday    ) { showWarning(QTime::currentTime().msecsSinceStartOfDay() % 2 == 0 ? resPayDay1 : resPayDay2); warnPayday = true; }}
+void QBookkeepingWatchdog::showWarnNkt       () { if (db.settings().warnNkt       ) { showWarning(resNkt);        warnNkt        = true; }}
+void QBookkeepingWatchdog::showWarnPrepayment() { if (db.settings().warnPrepayment) { showWarning(resPrepayment); warnPrepayment = true; }}
+void QBookkeepingWatchdog::showWarnHome      () { if (db.settings().warnHome      ) { showWarning(resHome);       warnHome       = true; }}
+void QBookkeepingWatchdog::showWarnWork      () { if (db.settings().warnWork      ) { showWarning(resWork,7500);  warnWork       = true; }}
+void QBookkeepingWatchdog::showWarnDone      () { if (db.settings().warnDone      ) { showWarning(resDone);       warnDone       = true; }}
+void QBookkeepingWatchdog::showWarnEat       () { if (db.settings().warnEat       ) { showWarning(resEat,6600);   warnEat        = true; }}
 
 void QBookkeepingWatchdog::setDefaults()
 {
@@ -93,6 +93,11 @@ void QBookkeepingWatchdog::setDefaults()
 	ui->pbEnter->setStyleSheet(pbEnterStyle);
 	ui->pbLeave->setStyleSheet(pbLeaveStyle);
 	ui->pbAccept->setEnabled(false);
+	// Жесть какой костыль тупо для того чтобы сделать текст по середине
+	// Ну... зато UI выглядит красиво
+	ui->cbCalcPeriod->setEditable(true);
+	ui->cbCalcPeriod->lineEdit()->setReadOnly(true);
+	ui->cbCalcPeriod->lineEdit()->setAlignment(Qt::AlignCenter);
 	timerProgress = 0;
 	warnPayday     = false;
 	warnPrepayment = false;

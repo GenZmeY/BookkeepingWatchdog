@@ -10,6 +10,7 @@
 #include <QFocusEvent>
 #include <QDesktopWidget>
 #include <QMovie>
+#include <QLineEdit>
 
 #include "Constants.h"
 #include "Structs.h"
