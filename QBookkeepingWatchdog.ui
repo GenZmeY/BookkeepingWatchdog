@@ -473,6 +473,9 @@
            </item>
            <item>
             <widget class="QComboBox" name="cbCalcPeriod">
+             <property name="editable">
+              <bool>false</bool>
+             </property>
              <property name="currentText">
               <string>Месяц</string>
              </property>
@@ -604,17 +607,10 @@
          <item>
           <widget class="QLabel" name="lbAbout">
            <property name="text">
-            <string>Утилита для наблюдения за своим рабочим временем.
-
-Задержка - время, необходимое чтобы добраться от компьютера до турникета
-Расчет времени - позволяет выбрать на основе какого промежутка времени будет происходить расчет времени (Месяц/Неделя/День). Влияет только на цвет иконки в трее
-
-https://github.com/GenZmeY/BookkeepingWatchdog
-Copyright (c) 2018 GenZmeY
-Apache License Version 2.0</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Утилита для наблюдения за своим рабочим временем.&lt;br/&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Задержка&lt;/span&gt; - время, необходимое чтобы добраться от компьютера до турникета;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Расчет времени&lt;/span&gt; - позволяет выбрать на основе какого промежутка времени будет происходить расчет времени (влияет только на цвет иконки в трее).&lt;/p&gt;&lt;p&gt;Исходники: &lt;a href=&quot;https://github.com/GenZmeY/BookkeepingWatchdog/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;github.com/GenZmeY/BookkeepingWatchdog&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Copyright (c) 2018 GenZmeY&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:7pt; font-weight:600;&quot;&gt;Apache License Version 2.0&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="textFormat">
-            <enum>Qt::AutoText</enum>
+            <enum>Qt::RichText</enum>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -623,6 +619,9 @@ Apache License Version 2.0</string>
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
            <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="openExternalLinks">
             <bool>true</bool>
            </property>
           </widget>
