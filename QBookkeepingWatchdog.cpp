@@ -502,10 +502,6 @@ void QBookkeepingWatchdog::statCalc(QDate _date)
 
 		int workToday = date.workTotal();
 
-		// Текущая наработка
-		if (dateIt == cd && !date.timeEvent.isEmpty() && date.timeEvent.last() == Event::Enter)
-			workToday += QTime::currentTime().msecsSinceStartOfDay()/1000 - date.timeEvent.lastKey();
-
 		if (dateIt == _date) // За день
 		{
 			workDayRequired = date.nonWorking ? 0 : workDayRequiredStandart;
